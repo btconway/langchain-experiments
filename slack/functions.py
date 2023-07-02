@@ -15,7 +15,7 @@ import logging
 import langchain
 import os
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.cache import SQLiteCache
+from langchain.cache import MemoryCache  # Import MemoryCache
 from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
@@ -24,13 +24,12 @@ logging.basicConfig(level=logging.INFO)
 def chat_interactive(user_input, model_name="claude-v1.3-100k", temperature=0.4, max_tokens_to_sample=75000, streaming=True, verbose=False):
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
-    # Replace RedisSemanticCache with SQLiteCache
-    langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
+    # Replace SQLiteCache with MemoryCache
+    langchain.llm_cache = MemoryCache()  # Use MemoryCache
 
     # Read the prompt template from a .txt file
     with open('Anthropic_Prompt.txt', 'r') as file:
         template = file.read()
-
 
     prompt = PromptTemplate(
         input_variables=["chat_history", "human_input"], template=template
