@@ -5,4 +5,4 @@ slack-sdk
 slack-bolt 
 flask
 gunicorn
-anthropic
+anthropic==0.2.10
