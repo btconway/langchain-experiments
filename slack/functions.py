@@ -1,43 +1,60 @@
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import LLMChain
-from dotenv import find_dotenv, load_dotenv
+from langchain.memory import ConversationBufferMemory
+from langchain import OpenAI, LLMChain, PromptTemplate
+from langchain.chat_models import ChatAnthropic
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
+    AIMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.embeddings import OpenAIEmbeddings
+import logging
+import langchain
+import os
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.cache import SQLiteCache
+from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
+logging.basicConfig(level=logging.INFO)
 
+def chat_interactive(user_input, model_name="claude-v1.3-100k", temperature=0.4, max_tokens_to_sample=75000, streaming=True, verbose=False):
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
-def draft_email(user_input, name="Dave"):
-    chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=1)
+    # Replace RedisSemanticCache with SQLiteCache
+    langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
 
-    template = """
-    
-    You are a helpful assistant that drafts an email reply based on an a new email.
-    
-    Your goal is to help the user quickly create a perfect email reply.
-    
-    Keep your reply short and to the point and mimic the style of the email so you reply in a similar manner to match the tone.
-    
-    Start your reply by saying: "Hi {name}, here's a draft for your reply:". And then proceed with the reply on a new line.
-    
-    Make sure to sign of with {signature}.
-    
-    """
+    # Read the prompt template from a .txt file
+    with open('/Users/benconway/Documents/GitHub/VNTANA-sales-chatbot/Anthropic_Prompt.txt', 'r') as file:
+        template = file.read()
 
-    signature = f"Kind regards, \n\{name}"
-    system_message_prompt = SystemMessagePromptTemplate.from_template(template)
-
-    human_template = "Here's the email to reply to and consider any other comments from the user for reply as well: {user_input}"
-    human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
-
-    chat_prompt = ChatPromptTemplate.from_messages(
-        [system_message_prompt, human_message_prompt]
+    prompt = PromptTemplate(
+        input_variables=["chat_history", "human_input"], template=template
     )
 
-    chain = LLMChain(llm=chat, prompt=chat_prompt)
-    response = chain.run(user_input=user_input, signature=signature, name=name)
+    # Initialize the memory
+    memory = ConversationBufferMemory(memory_key="chat_history")
 
+    # Initialize the LLMChain with the ChatAnthropic model
+    llm_chain = LLMChain(
+        llm=ChatAnthropic(
+            model=model_name,
+            temperature=temperature,
+            max_tokens_to_sample=max_tokens_to_sample,
+            streaming=streaming,
+            verbose=verbose,
+            callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
+        ),
+        prompt=prompt,
+        verbose=verbose,
+        memory=memory,
+    )
+
+    # Interactive chat
+    if user_input.lower() == "quit":
+        return "Chat ended"
+    response = llm_chain.predict(human_input=user_input)
     return response
