@@ -5,7 +5,7 @@ from slack_bolt.adapter.flask import SlackRequestHandler
 from slack_bolt import App
 from dotenv import find_dotenv, load_dotenv
 from flask import Flask, request
-from functions import draft_email
+from functions import chat_interactive  # Import the function here
 
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
@@ -23,37 +23,6 @@ app = App(token=SLACK_BOT_TOKEN)
 flask_app = Flask(__name__)
 handler = SlackRequestHandler(app)
 
-
-def get_bot_user_id():
-    """
-    Get the bot user ID using the Slack API.
-    Returns:
-        str: The bot user ID.
-    """
-    try:
-        # Initialize the Slack client with your bot token
-        slack_client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
-        response = slack_client.auth_test()
-        return response["user_id"]
-    except SlackApiError as e:
-        print(f"Error: {e}")
-
-
-def my_function(text):
-    """
-    Custom function to process the text and return a response.
-    In this example, the function converts the input text to uppercase.
-
-    Args:
-        text (str): The input text to process.
-
-    Returns:
-        str: The processed text.
-    """
-    response = text.upper()
-    return response
-
-
 @app.event("app_mention")
 def handle_mentions(body, say):
     """
@@ -70,10 +39,8 @@ def handle_mentions(body, say):
     text = text.replace(mention, "").strip()
 
     say("Sure, I'll get right on that!")
-    # response = my_function(text)
-    response = draft_email(text)
+    response = chat_interactive(text)  # Call the function here
     say(response)
-
 
 @flask_app.route("/slack/events", methods=["POST"])
 def slack_events():
@@ -85,7 +52,6 @@ def slack_events():
         Response: The result of handling the request.
     """
     return handler.handle(request)
-
 
 # Run the Flask app
 if __name__ == "__main__":
