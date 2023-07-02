@@ -1,5 +1,5 @@
 python-dotenv
-langchain
+langchain==0.0.218
 openai
 slack-sdk 
 slack-bolt 
