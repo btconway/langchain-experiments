@@ -28,8 +28,9 @@ def chat_interactive(user_input, model_name="claude-v1.3-100k", temperature=0.4,
     langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
 
     # Read the prompt template from a .txt file
-    with open('/Users/benconway/Documents/GitHub/VNTANA-sales-chatbot/Anthropic_Prompt.txt', 'r') as file:
+    with open('Anthropic_Prompt.txt', 'r') as file:
         template = file.read()
+
 
     prompt = PromptTemplate(
         input_variables=["chat_history", "human_input"], template=template
