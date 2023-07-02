@@ -8,3 +8,9 @@ chromadb
 tiktoken
 faiss-cpu
 wikipedia
+flask
+gunicorn
+langchain
+slack_sdk
+slack_bolt
+OpenAI
