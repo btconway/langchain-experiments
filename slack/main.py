@@ -2,7 +2,7 @@ import os
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_bolt.adapter.flask import SlackRequestHandler
-from slack_bolt import App
+from slack_bolt import App as SlackApp  # Rename the import here
 from dotenv import find_dotenv, load_dotenv
 from flask import Flask, request
 from functions import chat_interactive  # Import the function here
@@ -16,14 +16,14 @@ SLACK_SIGNING_SECRET = os.environ["SLACK_SIGNING_SECRET"]
 SLACK_BOT_USER_ID = os.environ["SLACK_BOT_USER_ID"]
 
 # Initialize the Slack app
-app = App(token=SLACK_BOT_TOKEN)
+slack_app = SlackApp(token=SLACK_BOT_TOKEN)  # Rename the Slack app here
 
 # Initialize the Flask app
 # Flask is a web application framework written in Python
-flask_app = Flask(__name__)
-handler = SlackRequestHandler(app)
+app = Flask(__name__)  # Rename the Flask app here
+handler = SlackRequestHandler(slack_app)  # Use the renamed Slack app here
 
-@app.event("app_mention")
+@slack_app.event("app_mention")  # Use the renamed Slack app here
 def handle_mentions(body, say):
     """
     Event listener for mentions in Slack.
@@ -42,7 +42,7 @@ def handle_mentions(body, say):
     response = chat_interactive(text)  # Call the function here
     say(response)
 
-@flask_app.route("/slack/events", methods=["POST"])
+@app.route("/slack/events", methods=["POST"])  # Use the renamed Flask app here
 def slack_events():
     """
     Route for handling Slack events.
@@ -55,4 +55,4 @@ def slack_events():
 
 # Run the Flask app
 if __name__ == "__main__":
-    flask_app.run()
+    app.run()  # Use the renamed Flask app here
